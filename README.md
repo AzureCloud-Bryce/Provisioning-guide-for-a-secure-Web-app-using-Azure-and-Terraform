@@ -371,18 +371,7 @@ Type `yes` when prompted. This deletes everything inside `rg-applab01-YOUR_NAME`
 
 ## VM Management (Cost Control)
 
-To avoid using Azure credits overnight, **deallocate** your VMs instead of destroying everything:
-
-```powershell
-az vm deallocate --resource-group rg-applab01-YOUR_NAME --name vm-web-01
-az vm deallocate --resource-group rg-applab01-YOUR_NAME --name vm-db-01
-```
-
-To start them again before your next lab:
-
-```powershell
-az vm start --resource-group rg-applab01-YOUR_NAME --name vm-web-01
-az vm start --resource-group rg-applab01-YOUR_NAME --name vm-db-01
+To avoid using Azure credits overnight, run **terraform destroy** in your terminal, or delete the resource group in Azure.
 ```
 
 ---
