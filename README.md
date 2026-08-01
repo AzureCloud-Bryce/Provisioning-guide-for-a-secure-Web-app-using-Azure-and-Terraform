@@ -1,4 +1,4 @@
-# Lab 02: Building a Secure 2-Tier Web Application with Terraform
+# Azure Lab: Building a Secure 2-Tier Web Application with Terraform
 
 **Author:** Bryce Johnson
 **Estimated Time:** 30-45 Minutes
