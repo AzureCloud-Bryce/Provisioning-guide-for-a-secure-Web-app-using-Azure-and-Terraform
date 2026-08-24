@@ -261,6 +261,31 @@ resource "azurerm_linux_virtual_machine" "db" {
   }
 }
 
+# ── Phase 4: Validating the Connection ──────────────────────
+
+resource "azurerm_network_security_group" "web" {
+  name                = "nsg-web-01"
+  location            = azurerm_resource_group.applab01.location
+  resource_group_name = azurerm_resource_group.applab01.name
+
+  security_rule {
+    name                       = "Allow-SSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "YOUR.HOME.IP.HERE/32"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "web" {
+  subnet_id                 = azurerm_subnet.web.id
+  network_security_group_id = azurerm_network_security_group.web.id
+}
+
 # ── Phase 5: Network Security Group ──────────────────────
 
 resource "azurerm_network_security_group" "db" {
