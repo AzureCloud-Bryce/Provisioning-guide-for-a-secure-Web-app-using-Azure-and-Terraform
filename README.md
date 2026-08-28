@@ -105,13 +105,12 @@ provider "azurerm" {
 }
 ```
 
-> Replace `your-subscription-id-here` with the `id` value from `az account show`.
-
 ---
 
 #### `variables.tf`
 
 ```hcl
+# All of these Variable have personal information protected by terraform.tfvars
 variable "your_name" {
   description = "Your name, used in the resource group name"
   type        = string
@@ -129,10 +128,26 @@ variable "admin_ssh_key" {
   type        = string
   default     = "PASTE YOUR PUBLIC KEY HERE"
 }
+
+variable "home_ip" {
+  type        = string
+  description = "Public IP allowed to SSH, in CIDR notation"
+}
+```
+
+---
+
+#### `terraform.tfvars`
+```hcl
+#IMPORTANT! Add this file to a .gitignore to protect your information.
+#To pull your public IP address, use "(Invoke-RestMethod ifconfig.me/ip).Trim()" in PowerShell.
+your_name     = "ENTER YOUR NAME"
+location      = "ENTER THE AZURE REGION"
+admin_ssh_key = "ENTER SSH KEY"
+home_ip       = "ENTER YOUR PUBLIC IP"
 ```
 
 > Replace `PASTE YOUR PUBLIC KEY HERE` with the full output from `cat key-lab02.pub`.
-
 ---
 
 #### `main.tf`
@@ -198,7 +213,7 @@ resource "azurerm_linux_virtual_machine" "web" {
   name                  = "vm-web-01"
   location              = azurerm_resource_group.applab01.location
   resource_group_name   = azurerm_resource_group.applab01.name
-  size                  = "Standard_B1s"
+  size                  = "Standard_D2s_v3"
   admin_username        = "azureuser"
   network_interface_ids = [azurerm_network_interface.web.id]
 
@@ -240,7 +255,7 @@ resource "azurerm_linux_virtual_machine" "db" {
   name                  = "vm-db-01"
   location              = azurerm_resource_group.applab01.location
   resource_group_name   = azurerm_resource_group.applab01.name
-  size                  = "Standard_B1s"
+  size                  = "Standard_D2s_v3"
   admin_username        = "azureuser"
   network_interface_ids = [azurerm_network_interface.db.id]
 
@@ -277,7 +292,7 @@ resource "azurerm_network_security_group" "web" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "YOUR.HOME.IP.HERE/32"
+    source_address_prefix      = "${var.home_ip}/32"
     destination_address_prefix = "*"
   }
 }
@@ -345,32 +360,47 @@ Type `yes` when prompted. Deployment takes 2–5 minutes.
 After `terraform apply` completes, go to the Azure Portal and verify each item below.
 
 #### Resource Group exists
-
 - [ ] Resource group `rg-applab01-NAME` exists in your selected region
 
-
 #### VNet and Subnets
-
 - [ ] `vnet-applab01` contains both `snet-web` and `snet-db` subnets
 
-
 #### Web Server has a Public IP
-
-- [ ] `vm-web-01` has a Public IP address assigned on the overview page
-
+- [ ] `vm-web-01` has a Public IP address assigned on the overview page — note this down, you'll need it to connect
 
 #### Database Server has NO Public IP
-
 - [ ] `vm-db-01` shows **no** Public IP address on the overview page
 
-
 #### NSG is configured correctly
-
 - [ ] `nsg-db-01` is associated with `snet-db` with the `Allow-Web-Subnet` inbound rule
 
 ---
 
-## Clean Up
+### Step 4: Test Connectivity
+
+#### SSH into the web server
+
+```powershell
+ssh -i "$env:USERPROFILE\.ssh\<your-key>" azureuser@<web-public-ip>
+```
+
+- [ ] You reach a shell prompt reading `azureuser@vm-web-01`
+
+If this times out, your home IP has probably changed. Run `curl.exe ifconfig.me`, update `home_ip` in `terraform.tfvars`, and re-apply.
+
+#### Ping the database server
+
+From inside the SSH session:
+
+```bash
+ping -c 6 10.0.2.4
+```
+
+- [ ] Six replies come back, confirming the two subnets can talk to each other
+
+---
+
+## - IMPORTANT - Clean Up 
 
 When you are completely done with this lab, destroy all resources:
 
